@@ -1,0 +1,7 @@
+{
+  "db": "mongodb",
+  "host": "ds145093.mlab.com:45093",
+  "database": "pa-db",
+  "username": "admin",
+  "password": "Password123"
+}
