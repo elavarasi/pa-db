@@ -1,29 +1,76 @@
 "use strict";
-
-const User = require('../models/user.model');
-const {getMongoClient, getCollection, closeMongoClient} = require('../lib/dbConnect');
+const {userModel} = require('../models/userModel');
+const {opendbConnection, closedbConnection} = require('../lib/dbConnect');
+const logger = require('../lib/logger');
 
 /**
- * The getAllUsers Controller fetches all the users in the User Collection and sets it to the response object
+ * getAllUsers fetches all the users in the User Collection
  */
 const getAllUsers = function(req, res) {
-  const mongoClient = getMongoClient();
+  const mongoClient = opendbConnection();
   mongoClient
     .then(mongoclient => {
-      const collection = getCollection(mongoclient, 'users');
-      return {userCollection: collection, mongoClient: mongoclient};
-    })
-    .then(result => {
-      const users = result.userCollection.find().toArray();
-      return Promise.all([users,  Promise.resolve(result.mongoClient)]);
-    })
-    .then(result => {
-      closeMongoClient(result[1]);
-      res.json(result[0]);
+      userModel.find({}).exec(function(err, user) {
+        if(err) {
+          logger.info(err);
+          res.send(err);
+        }
+        logger.info(user);
+        res.json(user);
+        closedbConnection()
+      });
     })
     .catch(err => {
-      res.send(err);
+      logger.info(err);
+      res.status(500).send(err);
     })
 };
 
-module.exports = {getAllUsers};
+
+/**
+ * filterUsers fetches all the users matching the input query filters
+ */
+const filterUsers = function(req, res) {
+  const mongoClient = opendbConnection();
+  mongoClient
+    .then(mongoclient => {
+      userModel.find(req.query).exec(function(err, user) {
+        if(err) {
+          res.send(err);
+        }
+        logger.info(user);
+        res.json(user);
+        closedbConnection()
+      });
+    })
+    .catch(err => {
+      logger.info(err);
+      res.status(500).send(err);
+    })
+};
+
+/**
+ * createUser adds a new user to the pa-db Users collection
+ */
+const createUser = function(req, res) {
+  const mongoClient = opendbConnection();
+  mongoClient
+    .then(mongoclient => {
+      const newuser = new userModel(req.body);
+      newuser.save(function(err, response) {
+        if(err) {
+          res.send(err);
+        }
+        logger.info(response);
+        res.json(response);
+        closedbConnection()
+      });
+    })
+    .catch(err => {
+      logger.info(err);
+      res.status(500).send(err);
+    })
+};
+
+
+module.exports = {getAllUsers, filterUsers, createUser};

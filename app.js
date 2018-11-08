@@ -1,14 +1,15 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 
-var log4js = require('log4js');
-var logger = log4js.getLogger();
-logger.level = 'debug';
+const logger = require('./lib/logger');
 
 const app = express();
 const port = process.env.PORT || 8000;
 
 const users = require('./routes/userRoute');
+
+const bodyParser = require('body-parser');
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
 
 app.use('/users', users);
 
